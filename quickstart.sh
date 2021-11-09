@@ -3,6 +3,7 @@
 # 3DCityDB PostGIS Docker Image Quickstart Script ----------------------------
 # Contact: Bruno Willenborg <b.willenborg@tum.de
 # Chair of Geoinformatics, Technical University of Munich (TUM)
+# Modified by Giuseppe Peronato, Idiap Research Institute, <gperonato@idiap.ch>
 #-----------------------------------------------------------------------------
 
 # Greetings ------------------------------------------------------------------
@@ -14,22 +15,13 @@ cat <<EOF
 
 Welcome to the 3DCityDB PostGIS Docker Image Quickstart Script. This script will 
 guide you through the process of setting up a 3DCityDB Docker Container. It is going
-to download the latest 3DCityDB PostGIS Docker image from DockerHub for you and create
-a 3DCityDB PostGIS Docker container based on the configuration parameters requested
-during this script.
+to create a 3DCityDB PostGIS Docker image of a specific version from the Docker file
+in this repository and a 3DCityDB PostGIS Docker container based on the configuration
+parameters requested during this script.
 
 Please follow the instructions of the script.
   Enter the required parameters when prompted and press ENTER to confirm.
   Only press ENTER when prompted to use the default value.
-
-Documentation and help:
-   3DCityDB PostGIS Docker Image:  https://github.com/tum-gis/3dcitydb-docker-postgis
-   3DCityDB on DockerHub:          https://hub.docker.com/r/tumgis/3dcitydb-postgis/
-   3DCityDB:                       https://github.com/3dcitydb
-
-Having problems or need support?
-   Please file an issue here:
-   https://github.com/tum-gis/3dcitydb-docker-postgis/issues
 
 ########################################################################################
 
@@ -51,7 +43,27 @@ if [ "$?" != "0" ]; then
   exit 
 fi
 
-# Prompt for CONTAINERNAME, PORT, DBUSER, DBPASSWORD, DBNAME, SRID, SRSNAME ----------------------
+# Prompt for IMAGENAME, VERSION, CONTAINERNAME, PORT, DBUSER, DBPASSWORD, DBNAME, SRID, SRSNAME ----------------------
+
+# IMAGENAME
+echo
+echo 'Please enter a NAME for the 3DCityDB PostGIS Docker image. Press ENTER to use default.'
+read -p "(default=3dcitydb-postgis): " IMAGENAME
+IMAGENAME=${IMAGENAME:-3dcitydb-postgis}
+
+
+# VERSION
+echo
+echo 'Please enter a version for the 3DCityDB PostGIS Docker image. Press ENTER to use default.'
+read -p "(default=v3.3.1): " VERSION
+VERSION=${VERSION:-v3.3.1}
+
+# NETWORKNAME
+echo
+echo 'Please enter a network for the container. Press ENTER to use default.'
+read -p "(default=citydb-network): " NETWORKNAME
+NETWORKNAME=${NETWORKNAME:-citydb-network}
+
 # CONTAINERNAME
 echo
 echo 'Please enter a NAME for the 3DCityDB PostGIS Docker container. Press ENTER to use default.'
@@ -120,6 +132,10 @@ cat <<EOF
 
 Here is a summary of the settings you provided:
 
+Image name:              $IMAGENAME
+3DCityDB version:        $VERSION
+Container name:          $NETWORKNAME
+
 Container name:          $CONTAINERNAME
 Container host port:     $PORT
 3DCityDB username:       $DBUSER
@@ -131,17 +147,24 @@ Container host port:     $PORT
 ########################################################################################
 
 EOF
-# Create Docker container
+echo 'Trying to build your docker container now...'
+docker build -t "$IMAGENAME" "$VERSION"
+echo
+echo 'Trying to create the network now...'
+docker network ls|grep "$NETWORKNAME" > /dev/null || docker network create "$NETWORKNAME"
+echo
 echo 'Trying to start your docker container now...'
 echo
-docker run -dit --name "$CONTAINERNAME" \
+docker run -dit \
+    --network "$NETWORKNAME" \
+    --name "$CONTAINERNAME" \
     -p $PORT:5432 \
     -e "POSTGRES_USER=$DBUSER" \
     -e "POSTGRES_PASSWORD=$DBPASSWORD" \
     -e "CITYDBNAME=$DBNAME" \
     -e "SRID=$SRID" \
     -e "SRSNAME=$SRSNAME" \
-  tumgis/3dcitydb-postgis
+  "$IMAGENAME"
 
 # Did that work?
 if [ "$?" = "0" ]; then

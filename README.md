@@ -1,5 +1,7 @@
 # 3D City Database PostGIS Docker image
 
+This fork is used to create legacy 3DCityDB containers based on specific versions.
+
 **!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!**
 
 **Deprecation notice:** This repository has been deprecated on 6th of September 2021.
